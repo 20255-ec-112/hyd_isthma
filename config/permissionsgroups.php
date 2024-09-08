@@ -2,6 +2,9 @@
 return [
     "Registrations",
     "Members",
+    "SessionThemes",
+    "ProgramSpeakers",
+    "Programs",
     "FamilyDetailsReport",
     "PaymentDetailsReport",
     "TravelReport",

@@ -37,6 +37,10 @@ Route::group(['prefix' => 'v1'], function () {
             Route::get('listNotifications', 'NotificationsController@listNotifications');
             Route::get('getNotification/{id}', 'NotificationsController@getNotification');
         });
+        Route::group(['prefix' => 'programs'], function () {
+            Route::get('listPrograms', 'ProgramsController@listPrograms');
+            Route::get('getProgram/{id}', 'ProgramsController@getProgram');
+        });
         Route::post('logout', 'AuthController@logout');
         Route::post('deleteAccount', 'AuthController@deleteAccount');
     });

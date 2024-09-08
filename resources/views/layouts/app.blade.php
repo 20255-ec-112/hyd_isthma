@@ -44,6 +44,9 @@
     <link rel="stylesheet" href="{{ asset('assets/plugins/select2-bootstrap4-theme/select2-bootstrap4.min.css') }}">
     {{-- chat js  --}}
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    {{-- BS Stepper --}}
+    <link rel="stylesheet" href="{{ asset('assets/plugins/bs-stepper/css/bs-stepper.min.css') }}">
+    {{-- datetime picker --}}
     <link rel="stylesheet" href="{{ asset('assets/dist/css/custom.css') }}?v=0.1">
 </head>
 
@@ -139,6 +142,8 @@
     <script src="{{ asset('assets/plugins/select2/js/select2.full.min.js') }}"></script>
     <script src="{{ asset('assets/plugins/bs-custom-file-input/bs-custom-file-input.min.js') }}"></script>
     {{-- datables global configs --}}
+    <script src="{{ asset('assets/plugins/bs-stepper/js/bs-stepper.min.js') }}"></script>
+    {{-- BS strepper --}}
     <script src="{{ asset('assets/dist/js/app-global-config.js') }}"></script>
     <script type="text/javascript">
         //Initialize Select2 Elements
@@ -161,6 +166,13 @@
             // format: 'YYYY-MM-DD hh:mm A',
             format: 'YYYY-MM-DD',
             useCurrent: false
+        });
+
+        $('.datetime').datetimepicker({
+            format: 'YYYY-MM-DD hh:mm A',
+            icons: {
+                time: 'fa fa-clock',
+            }
         });
     </script>
     @stack('scripts')

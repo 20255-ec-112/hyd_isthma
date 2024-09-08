@@ -23,11 +23,17 @@ Route::middleware('auth')->group(function () {
     // Members
     Route::resource('members', 'MembersController');
     // Registration
-    Route::resource('registrations', 'RegistrationController', ['only' => ['index', 'show']]);
+    Route::resource('registrations', 'RegistrationController');
     // Notifications
     Route::resource('notifications', 'NotificationsController');
     // Permissions
     Route::resource('permissions', 'PermissionsController');
+    // Programs
+    Route::resource('sessiontheme', 'SessionThemeController');
+    // Speakers
+    Route::resource('programSpeakers', 'ProgramSpeakerController');
+    // Programs
+    Route::resource('programs', 'ProgramsController');
     // Users
     Route::resource('user', 'UserController');
     // Reports

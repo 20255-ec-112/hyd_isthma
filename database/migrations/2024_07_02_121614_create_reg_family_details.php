@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('reg_family_details', function (Blueprint $table) {
-             $table->id();
+            $table->id();
             $table->foreignId('registration_id')->constrained();
             $table->string("type")->nullable()->comment("mehram/children");
             $table->string("name")->nullable();

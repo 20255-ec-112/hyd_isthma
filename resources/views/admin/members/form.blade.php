@@ -14,7 +14,7 @@
                     method="post" enctype="multipart/form-data">
                     @csrf
                     {{ $member->id ? method_field('PUT') : '' }}
-                    <div class="card-body ">
+                    <div class="card-body">
                         <div class="row">
                             <div class="col-lg-6">
                                 {{-- name --}}

@@ -9,11 +9,8 @@ use App\Http\Requests\MemberLoginRequest;
 use App\Http\Requests\VerifyTokenRequest;
 use App\Mail\OtpEmail;
 use App\Models\Member;
-use App\Models\RegFamilyDetail;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Auth;
 use Laravel\Sanctum\PersonalAccessToken;
 use Ichtrojan\Otp\Otp;
 use Illuminate\Support\Facades\Mail;
@@ -35,7 +32,7 @@ class AuthController extends Controller
                 'status' => 'failure'
             ], Response::HTTP_BAD_REQUEST);
         }
-        // temp check for 
+        // temp check for
         if($request->phone === '7676079163') {
             return response()->json([
             'message' => 'OTP sent to your this number 7676079163',
@@ -145,7 +142,7 @@ class AuthController extends Controller
                 'confirm_arrival' => isset($IsRegDone) ? $user->registration->confirm_arrival : null,
                 'tilesInfo' => $userProgress,
                 'registration' => [
-                    "confirm_arrival" => isset($IsRegDone) ? $user->registration->confirm_arrival : null,
+                    "confirm_arrival" => isset($IsRegDone) ? (int) $user->registration->confirm_arrival : null,
                     "arrival_dtls" => $userProgress['additional_details'],
                     "family_dtls" => $userProgress['family_details'],
                     "financial_dtls" => $userProgress['financial_details']
@@ -183,7 +180,10 @@ class AuthController extends Controller
     public function getProfileProgress(Member $member) {
         // $familyDetails = isset($member->registration) ?  RegFamilyDetail::where(['registration_id' => $member->registration->id])->count() : 0;
         $familyDetails = (isset($member->registration) && !empty($member->registration->member_fees)) ?  1 : 0;
-        $financialDetails = isset($member->registration) ?  $member->registration->member_fees : 0;
+        $financialDetails = 0;
+        if($member->registration) {
+            $financialDetails =  ($member->registration->fees_paid_to_ameer != null &&  $member->registration->fees_paid_to_ameer > 0) ? 1 : 0;
+        }
         $arrivalDetails = isset($member->registration) ?  $member->registration->arrival_details : 0;
         return [
             'family_details' => $familyDetails > 0 ? 1 :  0,

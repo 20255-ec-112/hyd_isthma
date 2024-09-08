@@ -7,6 +7,7 @@
         <div class="card-body">
             <div class="row">
                 <div class="col-lg-12 mb-5">
+
                     <button class="btn btn-purple float-right" type="button" data-toggle="collapse" data-target="#regFilters"
                         aria-expanded="false" aria-controls="regFilters">
                         <i class="fas fa-filter"></i> Filter
@@ -14,6 +15,10 @@
                     <button class="btn btn-purple float-right mr-2" onclick="clearFilters()"> <i class="fas fa-filter "></i>
                         Clear
                         Filters</button>
+                    @if (auth()->user()->id == 1 || auth()->user()->can('Create Registrations'))
+                        <a href="{{ route('registrations.create') }}" class="btn btn-purple float-right  mr-2"><i
+                                class="fas fa-plus mr-2"></i>Create</a>
+                    @endif
                 </div>
                 <div class="collapse container" id="regFilters">
                     <div class="card card-body shadow-none">

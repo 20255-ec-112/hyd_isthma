@@ -362,12 +362,12 @@ class ReportsController extends Controller
             }
 
             $query = Member::select(DB::raw("$selector , count(*) as total_arkans"))
-                            ->filterByRegionType($queryBy, $queryByValue)
+                            ->filterByRegionType($queryBy, $queryByValue, $zoneFilter)
                             ->groupBy($selector)
                             ->orderBy($selector, 'asc');
 
-            $globalData = array_reduce($this->globalReportData($query, $queryBy, $queryByValue, $selector), 'array_merge', []);
-            
+            $globalData = array_reduce($this->globalReportData($query, $selector, $zoneFilter), 'array_merge', []);
+
             return $dataTables->eloquent($query)
                 ->addColumn('region_name', function (Member $member) use ($selector, $queryByValue) {
                     if (empty($queryByValue))
@@ -387,7 +387,7 @@ class ReportsController extends Controller
         return view('admin.reports.global-report');
     }
 
-    public function globalReportData($query, $queryBy, $queryByValue, $selector) {
+    public function globalReportData($query, $selector, $zoneFilter = null) {
         $data = [];
         $distinctRegions = $query->get();
         $sum_total_attendees = 0;
@@ -397,28 +397,28 @@ class ReportsController extends Controller
         foreach ($distinctRegions as $region) {
             $totalArkans = $region->total_arkans;
 
-            $totalAttendees = Registration::with('member')->whereHas('member', function ($query) use ($region, $selector) {
-                $query->filterByRegionType($selector, $region->{$selector});
+            $totalAttendees = Registration::with('member')->whereHas('member', function ($query) use ($region, $selector, $zoneFilter) {
+                $query->filterByRegionType($selector, $region->{$selector}, $zoneFilter);
             })->confirmArrival(1)->count();
 
-            $totaNonAttendees = Registration::with('member')->whereHas('member', function ($query) use ($region, $selector) {
-                $query->filterByRegionType($selector, $region->{$selector});
+            $totaNonAttendees = Registration::with('member')->whereHas('member', function ($query) use ($region, $selector, $zoneFilter) {
+                $query->filterByRegionType($selector, $region->{$selector}, $zoneFilter);
             })->confirmArrival(0)->count();
 
             $totalRegistered = Registration::with('member')->whereHas('member', function ($query) use ($region, $selector) {
                         $query->where($selector, $region->{$selector});
                     })->count();
 
-            $totalMembersCompletedFamilyDtls = Registration::with('member')->whereHas('member', function($query) use($region, $selector) {
-                        $query->filterByRegionType($selector, $region->{$selector});
+            $totalMembersCompletedFamilyDtls = Registration::with('member')->whereHas('member', function($query) use($region, $selector, $zoneFilter) {
+                        $query->filterByRegionType($selector, $region->{$selector}, $zoneFilter);
                     })->where('member_fees', '!=', null)->count();
 
-            $totalMembersPartialsHalfPayment = Registration::with('member')->whereHas('member', function($query) use($region, $selector) {
-                       $query->filterByRegionType($selector, $region->{$selector});
+            $totalMembersPartialsHalfPayment = Registration::with('member')->whereHas('member', function($query) use($region, $selector, $zoneFilter) {
+                       $query->filterByRegionType($selector, $region->{$selector}, $zoneFilter);
                     })->where('fees_paid_to_ameer', '!=', null)->where('fees_paid_to_ameer', '>', 0)->count();
 
-            $totalCompletedLastStep = Member::where('year_of_rukniyat', '!=', null)->where(function($query) use($region, $selector) {
-                       $query->filterByRegionType($selector, $region->{$selector});
+            $totalCompletedLastStep = Member::where('year_of_rukniyat', '!=', null)->where(function($query) use($region, $selector, $zoneFilter) {
+                       $query->filterByRegionType($selector, $region->{$selector}, $zoneFilter);
                     })->count();
 
             $sortedData = [
@@ -445,94 +445,9 @@ class ReportsController extends Controller
                 'sum_total_registered' => $sum_total_registered,
             ]
             ];
-        array_push($data, $footer_toals);    
+        array_push($data, $footer_toals);
         return $data;
     }
-    public function globalReportOld(Request $request, DataTables $dataTables) {
-
-        $user = User::find(auth()->user()->id);
-        if ($user->id != 1 && !$user->hasPermissionTo('View GlobalReport')){
-            abort(403);
-        }
-        if($request->ajax()) {
-            $zoneFilter = $request->zone_name;
-            if(!empty($user->zone_name))
-                $zoneFilter = $user->zone_name;
-
-            $queryBy = !empty($zoneFilter) ? 'division_name' : 'zone_name';
-            $globalData = array_reduce($this->globalReportDataOld($zoneFilter), 'array_merge', []);
-            $query = Member::select(DB::raw("$queryBy , count(*) as total_arkans"))->where(function($query) use($zoneFilter, $queryBy) {
-                if(!empty($zoneFilter)) {
-                    $query->where('zone_name', $zoneFilter);
-                }
-            })->groupBy($queryBy)->orderBy($queryBy, 'asc');
-            return $dataTables->eloquent($query)->addColumn('zone_name', function(Member $member) use($zoneFilter) {
-                return !empty($zoneFilter) ?  $member->division_name : $member->zone_name;
-            })->rawColumns(['zone_name'])->with('total_registered', $globalData)->addIndexColumn()->make(true);
-        }
-        return view('admin.reports.global-report');
-    }
-    public function globalReportDataOld($zoneFilter) {
-        $data = [];
-        $queryBy = !empty($zoneFilter) ? 'division_name' : 'zone_name';
-        $distinctData = Member::select($queryBy)->where(function($query) use($zoneFilter) {
-            if(!empty($zoneFilter)) {
-                $query->where('zone_name', $zoneFilter);
-            }
-        })->distinct()->orderBy($queryBy, 'asc')->get();
-        foreach ($distinctData as $item) {
-            $filterType = !empty($zoneFilter) ? $item->division_name : $item->zone_name;
-            $totalArkans = Member::where($queryBy, $filterType)->count();
-            $totalAttendees = Registration::with('member')->whereHas('member', function ($query) use ($filterType, $queryBy) {
-                        $query->where($queryBy, $filterType);
-                    })->where('confirm_arrival', 1)->count();
-            $totaNonAttendees = Registration::with('member')->whereHas('member', function ($query) use ($filterType, $queryBy) {
-                        $query->where($queryBy, $filterType);
-                    })->where('confirm_arrival', 0)->count();
-            $totalRegistered = Registration::with('member')->whereHas('member', function ($query) use ($filterType, $queryBy) {
-                        $query->where($queryBy, $filterType);
-                    })->count();
-            $totalMembersCompletedFamilyDtls = Registration::with('member')->whereHas('member', function($query) use($filterType, $queryBy) {
-                        $query->where($queryBy, $filterType);
-                    })->where('member_fees', '!=', null)->count();
-            $totalMembersPartialsHalfPayment = Registration::with('member')->whereHas('member', function($query) use($filterType, $queryBy) {
-                        $query->where($queryBy, $filterType);
-                    })->where('fees_paid_to_ameer', '!=', null)->where('fees_paid_to_ameer', '>', 0)->count();
-            $totalCompletedLastStep = Member::where('year_of_rukniyat', '!=', null)->where(function($query) use($filterType, $queryBy) {
-                        $query->where($queryBy, $filterType);
-                    })->count();
-            $sortedData= [
-                $filterType => [
-                    'registered' => $totalRegistered,
-                    'total_attendees' => $totalAttendees,
-                    'total_non_attendees' => $totaNonAttendees,
-                    'tot_attendees_percentage' => floatval($totalArkans > 0 ? round(($totalAttendees / $totalArkans) * 100, 2) : 0),
-                    'tot_registered_percentage' => floatval($totalArkans > 0 ? round(($totalRegistered / $totalArkans) * 100, 2) : 0),
-                    "percentage_family_details_completed"  => floatval( $totalMembersCompletedFamilyDtls > 0 ? round(($totalMembersCompletedFamilyDtls / $totalRegistered) * 100, 2) : 0),
-                    'percentage_full_half_payment_done' => floatval($totalMembersPartialsHalfPayment > 0 ? round(($totalMembersPartialsHalfPayment / $totalRegistered) * 100, 2) : 0),
-                    "completed_last_step" => floatval($totalCompletedLastStep > 0 ? round($totalCompletedLastStep / $totalRegistered * 100,  2): 0),
-                ],
-                "total_non_attendees" => Registration::with('member')->whereHas('member', function($query) use($zoneFilter) {
-                    if(!empty($zoneFilter)) {
-                        $query->where('zone_name', $zoneFilter);
-                    }
-                })->where('confirm_arrival', 0)->count(),
-                "total_attendees" => Registration::with('member')->whereHas('member', function($query) use($zoneFilter) {
-                    if(!empty($zoneFilter)) {
-                        $query->where('zone_name', $zoneFilter);
-                    }
-                })->where('confirm_arrival', 1)->count(),
-                "total_registered" => Registration::with('member')->whereHas('member', function($query) use($zoneFilter) {
-                    if(!empty($zoneFilter)) {
-                        $query->where('zone_name', $zoneFilter);
-                    }
-                })->count(),
-            ];
-            array_push($data, $sortedData);
-        }
-        return $data;
-    }
-
     public function syncRukunData(Request $request) {
         $request = Http::get(env('JIH_MARJAZ_API_URL'));
         $response = $request->json();

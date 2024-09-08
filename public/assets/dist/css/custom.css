@@ -25,7 +25,12 @@
 .btn-purple:hover{
     color: #fff;
 }
-
+.reg_form .form-group{
+    margin-bottom: 20px !important;
+}
+.cursor-pointer{
+    cursor: pointer !important;
+}
 @media only screen and (min-width: 280px) and (max-width: 1024px) {
     .login-box {
             width: 90% !important;
